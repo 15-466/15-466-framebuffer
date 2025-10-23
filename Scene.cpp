@@ -171,8 +171,8 @@ void Scene::load(std::string const &filename,
 
 	std::ifstream file(filename, std::ios::binary);
 
-	std::vector< char > names;
-	read_chunk(file, "str0", &names);
+	std::vector< char > loaded_names;
+	read_chunk(file, "str0", &loaded_names);
 
 	struct HierarchyEntry {
 		uint32_t parent;
@@ -183,8 +183,8 @@ void Scene::load(std::string const &filename,
 		glm::vec3 scale;
 	};
 	static_assert(sizeof(HierarchyEntry) == 4 + 4 + 4 + 4*3 + 4*4 + 4*3, "HierarchyEntry is packed.");
-	std::vector< HierarchyEntry > hierarchy;
-	read_chunk(file, "xfh0", &hierarchy);
+	std::vector< HierarchyEntry > loaded_hierarchy;
+	read_chunk(file, "xfh0", &loaded_hierarchy);
 
 	struct MeshEntry {
 		uint32_t transform;
@@ -192,8 +192,8 @@ void Scene::load(std::string const &filename,
 		uint32_t name_end;
 	};
 	static_assert(sizeof(MeshEntry) == 4 + 4 + 4, "MeshEntry is packed.");
-	std::vector< MeshEntry > meshes;
-	read_chunk(file, "msh0", &meshes);
+	std::vector< MeshEntry > loaded_meshes;
+	read_chunk(file, "msh0", &loaded_meshes);
 
 	struct CameraEntry {
 		uint32_t transform;
@@ -202,8 +202,8 @@ void Scene::load(std::string const &filename,
 		float clip_near, clip_far;
 	};
 	static_assert(sizeof(CameraEntry) == 4 + 4 + 4 + 4 + 4, "CameraEntry is packed.");
-	std::vector< CameraEntry > cameras;
-	read_chunk(file, "cam0", &cameras);
+	std::vector< CameraEntry > loaded_cameras;
+	read_chunk(file, "cam0", &loaded_cameras);
 
 	struct LightEntry {
 		uint32_t transform;
@@ -214,17 +214,17 @@ void Scene::load(std::string const &filename,
 		float fov;
 	};
 	static_assert(sizeof(LightEntry) == 4 + 1 + 3 + 4 + 4 + 4, "LightEntry is packed.");
-	std::vector< LightEntry > lights;
-	read_chunk(file, "lmp0", &lights);
+	std::vector< LightEntry > loaded_lights;
+	read_chunk(file, "lmp0", &loaded_lights);
 
 
 	//--------------------------------
 	//Now that file is loaded, create transforms for hierarchy entries:
 
 	std::vector< Transform * > hierarchy_transforms;
-	hierarchy_transforms.reserve(hierarchy.size());
+	hierarchy_transforms.reserve(loaded_hierarchy.size());
 
-	for (auto const &h : hierarchy) {
+	for (auto const &h : loaded_hierarchy) {
 		transforms.emplace_back();
 		Transform *t = &transforms.back();
 		if (h.parent != -1U) {
@@ -234,8 +234,8 @@ void Scene::load(std::string const &filename,
 			t->parent = hierarchy_transforms[h.parent];
 		}
 
-		if (h.name_begin <= h.name_end && h.name_end <= names.size()) {
-			t->name = std::string(names.begin() + h.name_begin, names.begin() + h.name_end);
+		if (h.name_begin <= h.name_end && h.name_end <= loaded_names.size()) {
+			t->name = std::string(loaded_names.begin() + h.name_begin, loaded_names.begin() + h.name_end);
 		} else {
 				throw std::runtime_error("scene file '" + filename + "' contains hierarchy entry with invalid name indices");
 		}
@@ -246,16 +246,16 @@ void Scene::load(std::string const &filename,
 
 		hierarchy_transforms.emplace_back(t);
 	}
-	assert(hierarchy_transforms.size() == hierarchy.size());
+	assert(hierarchy_transforms.size() == loaded_hierarchy.size());
 
-	for (auto const &m : meshes) {
+	for (auto const &m : loaded_meshes) {
 		if (m.transform >= hierarchy_transforms.size()) {
 			throw std::runtime_error("scene file '" + filename + "' contains mesh entry with invalid transform index (" + std::to_string(m.transform) + ")");
 		}
-		if (!(m.name_begin <= m.name_end && m.name_end <= names.size())) {
+		if (!(m.name_begin <= m.name_end && m.name_end <= loaded_names.size())) {
 			throw std::runtime_error("scene file '" + filename + "' contains mesh entry with invalid name indices");
 		}
-		std::string name = std::string(names.begin() + m.name_begin, names.begin() + m.name_end);
+		std::string name = std::string(loaded_names.begin() + m.name_begin, loaded_names.begin() + m.name_end);
 
 		if (on_drawable) {
 			on_drawable(*this, hierarchy_transforms[m.transform], name);
@@ -263,7 +263,7 @@ void Scene::load(std::string const &filename,
 
 	}
 
-	for (auto const &c : cameras) {
+	for (auto const &c : loaded_cameras) {
 		if (c.transform >= hierarchy_transforms.size()) {
 			throw std::runtime_error("scene file '" + filename + "' contains camera entry with invalid transform index (" + std::to_string(c.transform) + ")");
 		}
@@ -271,14 +271,14 @@ void Scene::load(std::string const &filename,
 			std::cout << "Ignoring non-perspective camera (" + std::string(c.type, 4) + ") stored in file." << std::endl;
 			continue;
 		}
-		this->cameras.emplace_back(hierarchy_transforms[c.transform]);
-		Camera *camera = &this->cameras.back();
+		cameras.emplace_back(hierarchy_transforms[c.transform]);
+		Camera *camera = &cameras.back();
 		camera->fovy = c.data / 180.0f * 3.1415926f; //FOV is stored in degrees; convert to radians.
 		camera->near = c.clip_near;
 		//N.b. far plane is ignored because cameras use infinite perspective matrices.
 	}
 
-	for (auto const &l : lights) {
+	for (auto const &l : loaded_lights) {
 		if (l.transform >= hierarchy_transforms.size()) {
 			throw std::runtime_error("scene file '" + filename + "' contains lamp entry with invalid transform index (" + std::to_string(l.transform) + ")");
 		}
@@ -294,15 +294,15 @@ void Scene::load(std::string const &filename,
 			std::cout << "Ignoring unrecognized lamp type (" + std::string(&l.type, 1) + ") stored in file." << std::endl;
 			continue;
 		}
-		this->lights.emplace_back(hierarchy_transforms[l.transform]);
-		Light *light = &this->lights.back();
+		lights.emplace_back(hierarchy_transforms[l.transform]);
+		Light *light = &lights.back();
 		light->type = static_cast<Light::Type>(l.type);
 		light->energy = glm::vec3(l.color) / 255.0f * l.energy;
 		light->spot_fov = l.fov / 180.0f * 3.1415926f; //FOV is stored in degrees; convert to radians.
 	}
 
 	//load any extra that a subclass wants:
-	load_extra(file, names, hierarchy_transforms);
+	load_extra(file, loaded_names, hierarchy_transforms);
 
 	if (file.peek() != EOF) {
 		std::cerr << "WARNING: trailing data in scene file '" << filename << "'" << std::endl;
