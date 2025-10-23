@@ -96,7 +96,7 @@ with open('glcorearb.h', 'r') as f:
 				continue
 
 			#check for version endif line:
-			m = re.match(r"^#endif /\* " + in_version + " \*/$", line)
+			m = re.match(r"^#endif /\* " + in_version + r" \*/$", line)
 			if m != None:
 				in_version = None
 				continue
@@ -157,7 +157,7 @@ typedef signed   long  int     khronos_ssize_t;
 with open("GL.cpp", "w") as f:
 	print("""#include "GL.hpp"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <iostream>
 #include <stdexcept>
 

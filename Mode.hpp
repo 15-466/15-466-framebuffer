@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <glm/glm.hpp>
 
 #include <memory>
@@ -24,5 +24,8 @@ struct Mode : std::enable_shared_from_this< Mode > {
 	// use 'set_current' to change the current Mode (e.g., to switch to a menu)
 	static std::shared_ptr< Mode > current;
 	static void set_current(std::shared_ptr< Mode > const &);
+
+	//Mode::window is the (global) SDL window:
+	static SDL_Window *window;
 };
 

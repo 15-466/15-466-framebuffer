@@ -1,12 +1,13 @@
 objs/
 dist/README-SDL.txt
+dist/README-glm.txt
+dist/README-libpng.txt
 dist/game.ilk
 dist/game.pdb
 dist/SDL2.dll
 dist/game
 dist/game.exe
-dist/freetype-test
-dist/freetype-test.*
 scenes/show-meshes*
 scenes/show-scene*
 *.blend[0-9]
+maek-cache.json

@@ -79,48 +79,48 @@ PlayMode::~PlayMode() {
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
 
-	if (evt.type == SDL_KEYDOWN) {
-		if (evt.key.keysym.sym == SDLK_ESCAPE) {
-			SDL_SetRelativeMouseMode(SDL_FALSE);
+	if (evt.type == SDL_EVENT_KEY_DOWN) {
+		if (evt.key.key == SDLK_ESCAPE) {
+			SDL_SetWindowRelativeMouseMode(Mode::window, false);
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_a) {
+		} else if (evt.key.key == SDLK_A) {
 			left.downs += 1;
 			left.pressed = true;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_d) {
+		} else if (evt.key.key == SDLK_D) {
 			right.downs += 1;
 			right.pressed = true;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_w) {
+		} else if (evt.key.key == SDLK_W) {
 			up.downs += 1;
 			up.pressed = true;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_s) {
+		} else if (evt.key.key == SDLK_S) {
 			down.downs += 1;
 			down.pressed = true;
 			return true;
 		}
-	} else if (evt.type == SDL_KEYUP) {
-		if (evt.key.keysym.sym == SDLK_a) {
+	} else if (evt.type == SDL_EVENT_KEY_UP) {
+		if (evt.key.key == SDLK_A) {
 			left.pressed = false;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_d) {
+		} else if (evt.key.key == SDLK_D) {
 			right.pressed = false;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_w) {
+		} else if (evt.key.key == SDLK_W) {
 			up.pressed = false;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_s) {
+		} else if (evt.key.key == SDLK_S) {
 			down.pressed = false;
 			return true;
 		}
-	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
-		if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
-			SDL_SetRelativeMouseMode(SDL_TRUE);
+	} else if (evt.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+		if (!SDL_GetWindowRelativeMouseMode(Mode::window)) {
+			SDL_SetWindowRelativeMouseMode(Mode::window, true);
 			return true;
 		}
-	} else if (evt.type == SDL_MOUSEMOTION) {
-		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
+	} else if (evt.type == SDL_EVENT_MOUSE_MOTION) {
+		if (SDL_GetWindowRelativeMouseMode(Mode::window)) {
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y)
