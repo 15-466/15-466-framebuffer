@@ -1,20 +1,21 @@
 name: Build
 on:
-  push:
+  workflow_dispatch:
   release:
     types: [created]
 
 env:
-  BASE_NAME: game4
-  NEST_LIBS_VERSION: v0.6
+  BASE_NAME: framebuffer
+  NEST_LIBS_VERSION: v0.14
 
 jobs:
   build-windows:
     name: Build (Windows)
     runs-on: windows-latest
     steps:
+      - uses: ilammy/msvc-dev-cmd@v1
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Fetch Libraries
@@ -27,10 +28,10 @@ jobs:
         shell: cmd
         run: |
           dir/w
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          ..\nest-libs\windows\jam\jam.exe JAM_TOOLSET=VISUALC -j3 -q && copy README.md dist
+          #call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          node Maekfile.js -q && copy README.md dist
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BASE_NAME }}-windows
           path: dist
@@ -57,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Fetch Libraries
@@ -70,11 +71,11 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install ftjam libgl-dev
+          sudo apt-get install libgl-dev libasound2-dev
           ls
-          jam -j3 -q && cp README.md dist
+          node Maekfile.js -q && cp README.md dist
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BASE_NAME }}-linux
           path: dist
@@ -101,7 +102,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Fetch Libraries
@@ -113,11 +114,10 @@ jobs:
       - name: Build Code
         shell: bash
         run: |
-          brew install ftjam
           ls
-          jam -j3 -q && cp README.md dist
+          node Maekfile.js -q && cp README.md dist
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BASE_NAME }}-macos
           path: dist
