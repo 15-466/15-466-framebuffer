@@ -171,11 +171,11 @@ void PlayMode::update(float elapsed) {
 		if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
 
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
-		glm::vec3 right = frame[0];
+		glm::vec3 rightward = frame[0];
 		//glm::vec3 up = frame[1];
 		glm::vec3 forward = -frame[2];
 
-		camera->transform->position += move.x * right + move.y * forward;
+		camera->transform->position += move.x * rightward + move.y * forward;
 	}
 
 	//reset button press counters:
